@@ -1,0 +1,8 @@
+name: StackMachine
+version: '${project.version}'
+main: me.ddggdd135.stackmachine.StackMachine
+api-version: 1.16
+prefix: StackMachine
+depend: [Slimefun, GuizhanLibPlugin, SlimeCustomizer, InfinityExpansion]
+authors: [Ddggdd135]
+description: 堆叠机器
