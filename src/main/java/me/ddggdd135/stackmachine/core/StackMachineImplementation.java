@@ -5,6 +5,7 @@ import com.xzavier0722.mc.plugin.slimefun4.storage.util.StorageCacheUtils;
 import io.github.mooy1.infinityexpansion.infinitylib.machines.AbstractMachineBlock;
 import io.github.mooy1.infinityexpansion.infinitylib.machines.MachineBlock;
 import io.github.mooy1.infinityexpansion.items.machines.MaterialGenerator;
+import io.github.mooy1.infinityexpansion.items.machines.VoidHarvester;
 import io.github.mooy1.infinityexpansion.items.quarries.Quarry;
 import io.github.thebusybiscuit.slimefun4.api.items.ItemGroup;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
@@ -109,7 +110,8 @@ public class StackMachineImplementation extends SlimefunItem
                         || item instanceof AContainer
                         || item instanceof MaterialGenerator
                         || item instanceof Quarry
-                        || item instanceof CustomMaterialGenerator;
+                        || item instanceof CustomMaterialGenerator
+                        || item instanceof VoidHarvester;
             }
 
             @Override
@@ -120,7 +122,8 @@ public class StackMachineImplementation extends SlimefunItem
                         || item instanceof AContainer
                         || item instanceof MaterialGenerator
                         || item instanceof Quarry
-                        || item instanceof CustomMaterialGenerator;
+                        || item instanceof CustomMaterialGenerator
+                        || item instanceof VoidHarvester;
             }
         });
 

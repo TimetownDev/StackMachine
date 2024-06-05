@@ -3,6 +3,8 @@ package me.ddggdd135.stackmachine.utils;
 import io.github.mooy1.infinityexpansion.InfinityExpansion;
 import io.github.mooy1.infinityexpansion.infinitylib.machines.MachineBlock;
 import io.github.mooy1.infinityexpansion.items.machines.MaterialGenerator;
+import io.github.mooy1.infinityexpansion.items.machines.VoidHarvester;
+import io.github.mooy1.infinityexpansion.items.materials.Materials;
 import io.github.mooy1.infinityexpansion.items.quarries.Quarry;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
 import io.ncbpfluffybear.slimecustomizer.objects.CustomMaterialGenerator;
@@ -87,6 +89,9 @@ public class RecipeUtils {
             int tickRate = ReflectionUtils.getField(customMaterialGenerator, "tickRate");
             ItemStack output = ReflectionUtils.getField(customMaterialGenerator, "output");
             recipes.add(RecipeUtils.createRecipe(tickRate - 1, new ItemStack[0], new ItemStack[] {output}));
+        } else if (machine instanceof VoidHarvester voidHarvester) {
+            int speed = ReflectionUtils.getField(voidHarvester, "speed");
+            recipes.add(RecipeUtils.createRecipe(speed, new ItemStack[0], new ItemStack[]{Materials.VOID_BIT}));
         }
 
         return recipes;
