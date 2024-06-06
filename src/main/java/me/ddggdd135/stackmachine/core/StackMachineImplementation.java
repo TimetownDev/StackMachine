@@ -43,6 +43,7 @@ import me.mrCookieSlime.Slimefun.Objects.SlimefunItem.interfaces.InventoryBlock;
 import me.mrCookieSlime.Slimefun.Objects.handlers.BlockTicker;
 import me.mrCookieSlime.Slimefun.api.inventory.BlockMenu;
 import me.mrCookieSlime.Slimefun.api.inventory.BlockMenuPreset;
+import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
@@ -58,7 +59,7 @@ public class StackMachineImplementation extends SlimefunItem
     };
     private static final int[] BORDER_MACHINE = {12, 14, 21, 22, 23};
     private final MachineProcessor<CustomCraftingOperation> processor = new MachineProcessor<>(this);
-    private final Map<Block, ItemStack> machineCache = new HashMap<>(); // <location, ItemStack>
+    private final Map<Location, ItemStack> machineCache = new HashMap<>(); // <location, ItemStack>
 
     public StackMachineImplementation(
             ItemGroup itemGroup, SlimefunItemStack item, RecipeType recipeType, ItemStack[] recipe) {
@@ -214,7 +215,7 @@ public class StackMachineImplementation extends SlimefunItem
                         processor.endOperation(block);
                         blockMenu.replaceExistingItem(40, new CustomItemStack(Material.BLACK_STAINED_GLASS_PANE, " "));
                     }
-                    machineCache.put(block, machineItem);
+                    machineCache.put(block.getLocation(), machineItem);
 
                     CustomCraftingOperation currentOperation = processor.getOperation(block);
 
