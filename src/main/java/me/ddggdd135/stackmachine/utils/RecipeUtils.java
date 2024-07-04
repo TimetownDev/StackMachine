@@ -89,7 +89,14 @@ public class RecipeUtils {
             int tickRate = ReflectionUtils.getField(customMaterialGenerator, "tickRate");
             ItemStack output = ReflectionUtils.getField(customMaterialGenerator, "output");
             recipes.add(RecipeUtils.createRecipe(tickRate - 1, new ItemStack[0], new ItemStack[] {output}));
-        } else if (machine instanceof VoidHarvester voidHarvester) {
+        } else if (machine instanceof org.lins.mmmjjkx.rykenslimefuncustomizer.objects.customs.machine.CustomMaterialGenerator customMaterialGenerator) {
+            int tickRate = ReflectionUtils.getField(customMaterialGenerator, "tickRate");
+            List<ItemStack> generation = ReflectionUtils.getField(customMaterialGenerator, "generation");
+            for(ItemStack itemStack : generation) {
+                recipes.add(RecipeUtils.createRecipe(tickRate - 1, new ItemStack[0], new ItemStack[] {itemStack}));
+            }
+        }
+        else if (machine instanceof VoidHarvester voidHarvester) {
             int speed = ReflectionUtils.getField(voidHarvester, "speed");
             recipes.add(RecipeUtils.createRecipe(speed, new ItemStack[0], new ItemStack[]{Materials.VOID_BIT}));
         }
