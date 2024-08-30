@@ -3,10 +3,6 @@ package me.ddggdd135.stackmachine.core;
 import com.xzavier0722.mc.plugin.slimefun4.storage.controller.SlimefunBlockData;
 import com.xzavier0722.mc.plugin.slimefun4.storage.util.StorageCacheUtils;
 import io.github.mooy1.infinityexpansion.infinitylib.machines.AbstractMachineBlock;
-import io.github.mooy1.infinityexpansion.infinitylib.machines.MachineBlock;
-import io.github.mooy1.infinityexpansion.items.machines.MaterialGenerator;
-import io.github.mooy1.infinityexpansion.items.machines.VoidHarvester;
-import io.github.mooy1.infinityexpansion.items.quarries.Quarry;
 import io.github.thebusybiscuit.slimefun4.api.items.ItemGroup;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItemStack;
@@ -26,12 +22,7 @@ import io.github.thebusybiscuit.slimefun4.utils.ChestMenuUtils;
 import io.github.thebusybiscuit.slimefun4.utils.SlimefunUtils;
 import io.github.thebusybiscuit.slimefun4.utils.itemstack.ItemStackWrapper;
 import io.ncbpfluffybear.slimecustomizer.objects.CustomMaterialGenerator;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
+import me.ddggdd135.stackmachine.StackMachine;
 import me.ddggdd135.stackmachine.utils.ItemUtils;
 import me.ddggdd135.stackmachine.utils.RecipeUtils;
 import me.ddggdd135.stackmachine.utils.ReflectionUtils;
@@ -49,6 +40,13 @@ import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.ItemStack;
+
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class StackMachineImplementation extends SlimefunItem
         implements EnergyNetComponent, InventoryBlock, MachineProcessHolder<CustomCraftingOperation> {
@@ -107,24 +105,22 @@ public class StackMachineImplementation extends SlimefunItem
                     ClickAction clickAction) {
                 if (cursor == null || cursor.getType().isAir()) return true;
                 SlimefunItem item = SlimefunItem.getByItem(cursor);
-                return item instanceof MachineBlock
-                        || item instanceof AContainer
-                        || item instanceof MaterialGenerator
-                        || item instanceof Quarry
-                        || item instanceof CustomMaterialGenerator
-                        || item instanceof VoidHarvester;
+                if (item != null) {
+                    return RecipeUtils.IsSupport(item);
+                }
+
+                return false;
             }
 
             @Override
             public boolean onClick(Player p, int slot, ItemStack cursor, ClickAction action) {
                 if (cursor == null || cursor.getType().isAir()) return true;
                 SlimefunItem item = SlimefunItem.getByItem(cursor);
-                return item instanceof MachineBlock
-                        || item instanceof AContainer
-                        || item instanceof MaterialGenerator
-                        || item instanceof Quarry
-                        || item instanceof CustomMaterialGenerator
-                        || item instanceof VoidHarvester;
+                if (item != null) {
+                    return RecipeUtils.IsSupport(item);
+                }
+
+                return false;
             }
         });
 
@@ -289,10 +285,12 @@ public class StackMachineImplementation extends SlimefunItem
         SlimefunItem machine = SlimefunItem.getByItem(machineItem);
         try {
             if (machine instanceof AContainer aContainer) return aContainer.getEnergyConsumption();
-            else if (machine instanceof AbstractMachineBlock machineBlock) {
+            else if (StackMachine.getInstance().InfinityExpansionSupport && machine instanceof AbstractMachineBlock machineBlock) {
                 return ReflectionUtils.getField(machineBlock, "energyPerTick");
-            } else if (machine instanceof CustomMaterialGenerator customMaterialGenerator) {
+            } else if (StackMachine.getInstance().SlimeCustomizerSupport && machine instanceof CustomMaterialGenerator customMaterialGenerator) {
                 return ReflectionUtils.getField(customMaterialGenerator, "energyPerTick");
+            } else if (StackMachine.getInstance().RykenSlimefunCustomizerSupport && machine instanceof org.lins.mmmjjkx.rykenslimefuncustomizer.objects.customs.machine.CustomMaterialGenerator customMaterialGenerator) {
+                return ReflectionUtils.getField(customMaterialGenerator, "per");
             }
         } catch (NoSuchFieldException | IllegalAccessException ignored) {
         }
