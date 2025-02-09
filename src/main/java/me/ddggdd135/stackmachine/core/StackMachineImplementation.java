@@ -22,6 +22,12 @@ import io.github.thebusybiscuit.slimefun4.utils.ChestMenuUtils;
 import io.github.thebusybiscuit.slimefun4.utils.SlimefunUtils;
 import io.github.thebusybiscuit.slimefun4.utils.itemstack.ItemStackWrapper;
 import io.ncbpfluffybear.slimecustomizer.objects.CustomMaterialGenerator;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import me.ddggdd135.stackmachine.StackMachine;
 import me.ddggdd135.stackmachine.utils.ItemUtils;
 import me.ddggdd135.stackmachine.utils.RecipeUtils;
@@ -40,13 +46,6 @@ import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.ItemStack;
-
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 public class StackMachineImplementation extends SlimefunItem
         implements EnergyNetComponent, InventoryBlock, MachineProcessHolder<CustomCraftingOperation> {
@@ -205,9 +204,12 @@ public class StackMachineImplementation extends SlimefunItem
 
                 MachineRecipe recipeCache = null;
 
-                for (int i = 0; i < machineItem.getAmount(); i++) {
+                int ticks = machineItem.getAmount();
+
+                while (ticks > 0) {
                     if (machineCache.containsKey(block.getLocation())
-                            && !SlimefunUtils.isItemSimilar(machineCache.get(block.getLocation()), machineItem, false)) {
+                            && !SlimefunUtils.isItemSimilar(
+                                    machineCache.get(block.getLocation()), machineItem, false)) {
                         processor.endOperation(block);
                         blockMenu.replaceExistingItem(40, new CustomItemStack(Material.BLACK_STAINED_GLASS_PANE, " "));
                     }
@@ -216,10 +218,12 @@ public class StackMachineImplementation extends SlimefunItem
                     CustomCraftingOperation currentOperation = processor.getOperation(block);
 
                     if (currentOperation == null) {
+                        ticks--;
                         MachineRecipe next = recipeCache;
                         if (next == null
                                 || !(InvUtils.fitAll(blockMenu.toInventory(), next.getOutput(), getOutputSlots())
-                                && InvUtils.fitAll(blockMenu.toInventory(), next.getOutput(), getOutputSlots()))) {
+                                        && InvUtils.fitAll(
+                                                blockMenu.toInventory(), next.getOutput(), getOutputSlots()))) {
                             next = findNextRecipe(blockMenu, recipes);
                             if (next == null) break;
                             recipeCache = next;
@@ -235,32 +239,40 @@ public class StackMachineImplementation extends SlimefunItem
                                 31,
                                 new CustomItemStack(
                                         Material.IRON_PICKAXE,
-                                        "&a工作中 耗电量: " + getEnergyPerTick(block) + "/slimefun tick &e" + machineItem.getAmount()
-                                                + "倍速"));
+                                        "&a工作中 耗电量: " + getEnergyPerTick(block) + "/slimefun tick &e"
+                                                + machineItem.getAmount() + "倍速"));
                     }
 
                     if (takeCharge(block)) {
                         if (!currentOperation.isFinished()) {
-                            currentOperation.addProgress(1);
+                            if (ticks > currentOperation.getTotalTicks()) {
+                                currentOperation.addProgress(currentOperation.getTotalTicks());
+                                ticks -= currentOperation.getTotalTicks();
+                            } else {
+                                currentOperation.addProgress(ticks);
+                                ticks = 0;
+                            }
                             processor.updateProgressBar(blockMenu, 40, currentOperation);
                             blockMenu.replaceExistingItem(
                                     31,
                                     new CustomItemStack(
                                             Material.IRON_PICKAXE,
-                                            "&a工作中 耗电量: " + getEnergyPerTick(block) + "/slimefun tick &e" + machineItem.getAmount()
-                                                    + "倍速"));
+                                            "&a工作中 耗电量: " + getEnergyPerTick(block) + "/slimefun tick &e"
+                                                    + machineItem.getAmount() + "倍速"));
                         } else {
+                            ticks--;
                             for (ItemStack output : currentOperation.getResults()) {
                                 blockMenu.pushItem(output.clone(), getOutputSlots());
                             }
                             processor.endOperation(block);
-                            blockMenu.replaceExistingItem(40, new CustomItemStack(Material.BLACK_STAINED_GLASS_PANE, " "));
+                            blockMenu.replaceExistingItem(
+                                    40, new CustomItemStack(Material.BLACK_STAINED_GLASS_PANE, " "));
                         }
                     } else {
-                        blockMenu.replaceExistingItem(31, new CustomItemStack(Material.RED_STAINED_GLASS_PANE, "&c无电力"));
+                        blockMenu.replaceExistingItem(
+                                31, new CustomItemStack(Material.RED_STAINED_GLASS_PANE, "&c无电力"));
                         break;
                     }
-
                 }
             }
 
@@ -285,11 +297,17 @@ public class StackMachineImplementation extends SlimefunItem
         SlimefunItem machine = SlimefunItem.getByItem(machineItem);
         try {
             if (machine instanceof AContainer aContainer) return aContainer.getEnergyConsumption();
-            else if (StackMachine.getInstance().InfinityExpansionSupport && machine instanceof AbstractMachineBlock machineBlock) {
+            else if (StackMachine.getInstance().InfinityExpansionSupport
+                    && machine instanceof AbstractMachineBlock machineBlock) {
                 return ReflectionUtils.getField(machineBlock, "energyPerTick");
-            } else if (StackMachine.getInstance().SlimeCustomizerSupport && machine instanceof CustomMaterialGenerator customMaterialGenerator) {
+            } else if (StackMachine.getInstance().SlimeCustomizerSupport
+                    && machine instanceof CustomMaterialGenerator customMaterialGenerator) {
                 return ReflectionUtils.getField(customMaterialGenerator, "energyPerTick");
-            } else if (StackMachine.getInstance().RykenSlimefunCustomizerSupport && machine instanceof org.lins.mmmjjkx.rykenslimefuncustomizer.objects.customs.machine.CustomMaterialGenerator customMaterialGenerator) {
+            } else if (StackMachine.getInstance().RykenSlimefunCustomizerSupport
+                    && machine
+                            instanceof
+                            org.lins.mmmjjkx.rykenslimefuncustomizer.objects.customs.machine.CustomMaterialGenerator
+                            customMaterialGenerator) {
                 return ReflectionUtils.getField(customMaterialGenerator, "per");
             }
         } catch (NoSuchFieldException | IllegalAccessException ignored) {

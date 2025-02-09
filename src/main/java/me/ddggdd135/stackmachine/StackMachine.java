@@ -13,6 +13,7 @@ public final class StackMachine extends JavaPlugin implements SlimefunAddon {
     public boolean SlimeCustomizerSupport;
     public boolean RykenSlimefunCustomizerSupport;
     public boolean InfinityExpansionSupport;
+
     @Override
     public void onEnable() {
         // Plugin startup logic

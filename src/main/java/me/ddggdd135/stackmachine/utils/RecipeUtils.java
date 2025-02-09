@@ -11,6 +11,10 @@ import io.github.thebusybiscuit.slimefun4.implementation.SlimefunItems;
 import io.github.thebusybiscuit.slimefun4.implementation.items.electric.machines.ElectricDustWasher;
 import io.github.thebusybiscuit.slimefun4.implementation.items.multiblocks.OreWasher;
 import io.ncbpfluffybear.slimecustomizer.objects.CustomMaterialGenerator;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
+import javax.annotation.Nonnull;
 import me.ddggdd135.stackmachine.StackMachine;
 import me.mrCookieSlime.Slimefun.Objects.SlimefunItem.abstractItems.AContainer;
 import me.mrCookieSlime.Slimefun.Objects.SlimefunItem.abstractItems.MachineRecipe;
@@ -18,11 +22,6 @@ import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.inventory.ItemStack;
-
-import javax.annotation.Nonnull;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.ThreadLocalRandom;
 
 public class RecipeUtils {
     private static final boolean QUARRY_ALLOW_NETHER_IN_OVERWORLD =
@@ -45,13 +44,17 @@ public class RecipeUtils {
             throws NoSuchFieldException, IllegalAccessException {
         List<MachineRecipe> recipes = new ArrayList<>();
         if (machine instanceof ElectricDustWasher) {
-            recipes.add(new MachineRecipe(4, new ItemStack[]{SlimefunItems.SIFTED_ORE}, new ItemStack[]{oreWasher.getRandomDust()}));
-            recipes.add(new MachineRecipe(4, new ItemStack[]{SlimefunItems.PULVERIZED_ORE}, new ItemStack[]{SlimefunItems.PURE_ORE_CLUSTER}));
-            recipes.add(new MachineRecipe(4, new ItemStack[]{new ItemStack(Material.SAND)}, new ItemStack[]{SlimefunItems.SALT}));
-        }
-        else if (machine instanceof AContainer aContainer) {
+            recipes.add(new MachineRecipe(
+                    4, new ItemStack[] {SlimefunItems.SIFTED_ORE}, new ItemStack[] {oreWasher.getRandomDust()}));
+            recipes.add(new MachineRecipe(
+                    4, new ItemStack[] {SlimefunItems.PULVERIZED_ORE}, new ItemStack[] {SlimefunItems.PURE_ORE_CLUSTER
+                    }));
+            recipes.add(new MachineRecipe(
+                    4, new ItemStack[] {new ItemStack(Material.SAND)}, new ItemStack[] {SlimefunItems.SALT}));
+        } else if (machine instanceof AContainer aContainer) {
             recipes.addAll(aContainer.getMachineRecipes());
-        } else if (StackMachine.getInstance().InfinityExpansionSupport && machine instanceof MachineBlock machineBlock) {
+        } else if (StackMachine.getInstance().InfinityExpansionSupport
+                && machine instanceof MachineBlock machineBlock) {
             List<Object> list = ReflectionUtils.getField(machineBlock, "recipes");
             int ticksPerOutput = ReflectionUtils.getField(machineBlock, "ticksPerOutput");
 
@@ -68,14 +71,15 @@ public class RecipeUtils {
                 }
                 for (int i = 0; i < strings.length; i++) {
                     recipes.add(RecipeUtils.createRecipe(
-                            ticksPerOutput, in.toArray(new ItemStack[0]), new ItemStack[]{output}));
+                            ticksPerOutput, in.toArray(new ItemStack[0]), new ItemStack[] {output}));
                 }
             }
-        } else if (StackMachine.getInstance().InfinityExpansionSupport && machine instanceof MaterialGenerator materialGenerator) {
+        } else if (StackMachine.getInstance().InfinityExpansionSupport
+                && machine instanceof MaterialGenerator materialGenerator) {
             Material material = ReflectionUtils.getField(materialGenerator, "material");
             int speed = ReflectionUtils.getField(materialGenerator, "speed");
             ItemStack output = new ItemStack(material, speed);
-            recipes.add(RecipeUtils.createRecipe(1, new ItemStack[0], new ItemStack[]{output}));
+            recipes.add(RecipeUtils.createRecipe(1, new ItemStack[0], new ItemStack[] {output}));
         } else if (StackMachine.getInstance().InfinityExpansionSupport && machine instanceof Quarry quarry) {
             int speed = ReflectionUtils.getField(quarry, "speed");
             int chance = ReflectionUtils.getField(quarry, "chance");
@@ -86,8 +90,8 @@ public class RecipeUtils {
                 if (!QUARRY_ALLOW_NETHER_IN_OVERWORLD
                         && block.getWorld().getEnvironment() != World.Environment.NETHER
                         && (outputType == Material.QUARTZ
-                        || outputType == Material.NETHERITE_INGOT
-                        || outputType == Material.NETHERRACK)) {
+                                || outputType == Material.NETHERITE_INGOT
+                                || outputType == Material.NETHERRACK)) {
                     outputItem = new ItemStack(Material.COBBLESTONE, speed);
                 } else {
                     outputItem = new ItemStack(outputType, speed);
@@ -95,20 +99,26 @@ public class RecipeUtils {
             } else {
                 outputItem = new ItemStack(Material.COBBLESTONE, speed);
             }
-            recipes.add(RecipeUtils.createRecipe(QUARRY_INTERVAL, new ItemStack[0], new ItemStack[]{outputItem}));
-        } else if (StackMachine.getInstance().SlimeCustomizerSupport && machine instanceof CustomMaterialGenerator customMaterialGenerator) {
+            recipes.add(RecipeUtils.createRecipe(QUARRY_INTERVAL, new ItemStack[0], new ItemStack[] {outputItem}));
+        } else if (StackMachine.getInstance().SlimeCustomizerSupport
+                && machine instanceof CustomMaterialGenerator customMaterialGenerator) {
             int tickRate = ReflectionUtils.getField(customMaterialGenerator, "tickRate");
             ItemStack output = ReflectionUtils.getField(customMaterialGenerator, "output");
-            recipes.add(RecipeUtils.createRecipe(tickRate - 1, new ItemStack[0], new ItemStack[]{output}));
-        } else if (StackMachine.getInstance().RykenSlimefunCustomizerSupport && machine instanceof org.lins.mmmjjkx.rykenslimefuncustomizer.objects.customs.machine.CustomMaterialGenerator customMaterialGenerator) {
+            recipes.add(RecipeUtils.createRecipe(tickRate - 1, new ItemStack[0], new ItemStack[] {output}));
+        } else if (StackMachine.getInstance().RykenSlimefunCustomizerSupport
+                && machine
+                        instanceof
+                        org.lins.mmmjjkx.rykenslimefuncustomizer.objects.customs.machine.CustomMaterialGenerator
+                        customMaterialGenerator) {
             int tickRate = ReflectionUtils.getField(customMaterialGenerator, "tickRate");
             List<ItemStack> generation = ReflectionUtils.getField(customMaterialGenerator, "generation");
             for (ItemStack itemStack : generation) {
-                recipes.add(RecipeUtils.createRecipe(tickRate - 1, new ItemStack[0], new ItemStack[]{itemStack}));
+                recipes.add(RecipeUtils.createRecipe(tickRate - 1, new ItemStack[0], new ItemStack[] {itemStack}));
             }
-        } else if (StackMachine.getInstance().InfinityExpansionSupport && machine instanceof VoidHarvester voidHarvester) {
+        } else if (StackMachine.getInstance().InfinityExpansionSupport
+                && machine instanceof VoidHarvester voidHarvester) {
             int speed = ReflectionUtils.getField(voidHarvester, "speed");
-            recipes.add(RecipeUtils.createRecipe(speed, new ItemStack[0], new ItemStack[]{Materials.VOID_BIT}));
+            recipes.add(RecipeUtils.createRecipe(speed, new ItemStack[0], new ItemStack[] {Materials.VOID_BIT}));
         }
 
         return recipes;
@@ -130,7 +140,9 @@ public class RecipeUtils {
         }
 
         if (StackMachine.getInstance().RykenSlimefunCustomizerSupport) {
-            if (sfItem instanceof org.lins.mmmjjkx.rykenslimefuncustomizer.objects.customs.machine.CustomMaterialGenerator) return true;
+            if (sfItem
+                    instanceof org.lins.mmmjjkx.rykenslimefuncustomizer.objects.customs.machine.CustomMaterialGenerator)
+                return true;
         }
 
         return false;
