@@ -241,6 +241,7 @@ public class StackMachineImplementation extends SlimefunItem
                                         Material.IRON_PICKAXE,
                                         "&a工作中 耗电量: " + getEnergyPerTick(block) + "/slimefun tick &e"
                                                 + machineItem.getAmount() + "倍速"));
+                        if (ticks <= 0) break;
                     }
 
                     if (takeCharge(block)) {
