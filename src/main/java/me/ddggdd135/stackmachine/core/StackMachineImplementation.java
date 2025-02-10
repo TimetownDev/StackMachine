@@ -234,13 +234,6 @@ public class StackMachineImplementation extends SlimefunItem
                         ItemUtils.takeItem(blockMenu, getInputSlots(), next.getInput());
                         currentOperation = new CustomCraftingOperation(next);
                         processor.startOperation(block, currentOperation);
-                        processor.updateProgressBar(blockMenu, 40, currentOperation);
-                        blockMenu.replaceExistingItem(
-                                31,
-                                new CustomItemStack(
-                                        Material.IRON_PICKAXE,
-                                        "&a工作中 耗电量: " + getEnergyPerTick(block) + "/slimefun tick &e"
-                                                + machineItem.getAmount() + "倍速"));
                         if (ticks <= 0) break;
                     }
 
@@ -253,28 +246,32 @@ public class StackMachineImplementation extends SlimefunItem
                                 currentOperation.addProgress(ticks);
                                 ticks = 0;
                             }
-                            processor.updateProgressBar(blockMenu, 40, currentOperation);
-                            blockMenu.replaceExistingItem(
-                                    31,
-                                    new CustomItemStack(
-                                            Material.IRON_PICKAXE,
-                                            "&a工作中 耗电量: " + getEnergyPerTick(block) + "/slimefun tick &e"
-                                                    + machineItem.getAmount() + "倍速"));
                         } else {
                             ticks--;
                             for (ItemStack output : currentOperation.getResults()) {
                                 blockMenu.pushItem(output.clone(), getOutputSlots());
                             }
                             processor.endOperation(block);
-                            blockMenu.replaceExistingItem(
-                                    40, new CustomItemStack(Material.BLACK_STAINED_GLASS_PANE, " "));
                         }
                     } else {
                         blockMenu.replaceExistingItem(
                                 31, new CustomItemStack(Material.RED_STAINED_GLASS_PANE, "&c无电力"));
-                        break;
+                        return;
                     }
                 }
+
+                CustomCraftingOperation currentOperation = processor.getOperation(block);
+                if (currentOperation == null || currentOperation.isFinished()) {
+                    blockMenu.replaceExistingItem(40, new CustomItemStack(Material.BLACK_STAINED_GLASS_PANE, " "));
+                    return;
+                }
+                blockMenu.replaceExistingItem(
+                        31,
+                        new CustomItemStack(
+                                Material.IRON_PICKAXE,
+                                "&a工作中 耗电量: " + getEnergyPerTick(block) + "/slimefun tick &e" + machineItem.getAmount()
+                                        + "倍速"));
+                processor.updateProgressBar(blockMenu, 40, currentOperation);
             }
 
             @Override
