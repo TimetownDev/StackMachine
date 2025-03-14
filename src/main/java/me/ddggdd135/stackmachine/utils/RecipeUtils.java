@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 import javax.annotation.Nonnull;
+import me.ddggdd135.guguslimefunlib.api.abstracts.AbstractMachineBlock;
 import me.ddggdd135.stackmachine.StackMachine;
 import me.mrCookieSlime.Slimefun.Objects.SlimefunItem.abstractItems.AContainer;
 import me.mrCookieSlime.Slimefun.Objects.SlimefunItem.abstractItems.MachineRecipe;
@@ -119,6 +120,8 @@ public class RecipeUtils {
                 && machine instanceof VoidHarvester voidHarvester) {
             int speed = ReflectionUtils.getField(voidHarvester, "speed");
             recipes.add(RecipeUtils.createRecipe(speed, new ItemStack[0], new ItemStack[] {Materials.VOID_BIT}));
+        } else if (machine instanceof AbstractMachineBlock abstractMachineBlock) {
+            recipes.addAll(abstractMachineBlock.getMachineRecipes());
         }
 
         return recipes;
@@ -133,6 +136,7 @@ public class RecipeUtils {
             if (sfItem instanceof MaterialGenerator) return true;
             if (sfItem instanceof Quarry) return true;
             if (sfItem instanceof VoidHarvester) return true;
+            if (sfItem instanceof AbstractMachineBlock) return true;
         }
 
         if (StackMachine.getInstance().SlimeCustomizerSupport) {

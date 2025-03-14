@@ -139,5 +139,11 @@
           <systemPath>${basedir}/lib/RykenSlimefunCustomizer.jar</systemPath>
       </dependency>
 
+      <dependency>
+          <groupId>com.github.TimetownDev</groupId>
+          <artifactId>GuguSlimefunLib</artifactId>
+          <version>f701e2ab67</version>
+      </dependency>
+
   </dependencies>
 </project>
