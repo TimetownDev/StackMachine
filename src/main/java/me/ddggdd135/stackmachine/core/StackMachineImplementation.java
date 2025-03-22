@@ -218,6 +218,7 @@ public class StackMachineImplementation extends SlimefunItem
                     CustomCraftingOperation currentOperation = processor.getOperation(block);
 
                     if (currentOperation == null) {
+                        ticks--;
                         MachineRecipe next = recipeCache;
                         if (next == null
                                 || !(InvUtils.fitAll(blockMenu.toInventory(), next.getOutput(), getOutputSlots())
@@ -233,11 +234,6 @@ public class StackMachineImplementation extends SlimefunItem
                         ItemUtils.takeItem(blockMenu, getInputSlots(), next.getInput());
                         currentOperation = new CustomCraftingOperation(next);
                         processor.startOperation(block, currentOperation);
-
-                        if (currentOperation.getTotalTicks() == 0) {
-                            ticks++;
-                        }
-
                         if (ticks <= 0) break;
                     }
 
