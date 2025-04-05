@@ -4,10 +4,10 @@ import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItemStack;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import io.github.thebusybiscuit.slimefun4.utils.SlimefunUtils;
-import java.util.HashMap;
-import java.util.Map;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import me.ddggdd135.guguslimefunlib.api.ItemHashMap;
+import me.ddggdd135.guguslimefunlib.items.ItemKey;
 import me.mrCookieSlime.Slimefun.api.inventory.BlockMenu;
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
@@ -17,20 +17,20 @@ import org.bukkit.persistence.PersistentDataType;
 public class ItemUtils {
     public static void takeItem(@Nonnull BlockMenu blockMenu, @Nonnull int[] slots, @Nonnull ItemStack[] itemStacks) {
         if (!canTake(blockMenu, slots, itemStacks)) throw new RuntimeException("There are no enough items");
-        Map<ItemStack, Integer> amounts = mergeAmounts(itemStacks);
+        ItemHashMap<Integer> amounts = me.ddggdd135.guguslimefunlib.utils.ItemUtils.getAmounts(itemStacks);
 
-        for (ItemStack itemStack : amounts.keySet()) {
+        for (ItemKey itemKey : amounts.sourceKeySet()) {
             for (int slot : slots) {
                 ItemStack item = blockMenu.getItemInSlot(slot);
                 if (item == null || item.getType().isAir()) continue;
-                if (SlimefunUtils.isItemSimilar(item, itemStack, true, false)) {
-                    if (item.getAmount() > amounts.get(itemStack)) {
-                        item.setAmount(item.getAmount() - amounts.get(itemStack));
+                if (SlimefunUtils.isItemSimilar(item, itemKey.getItemStack(), true, false)) {
+                    if (item.getAmount() > amounts.getKey(itemKey)) {
+                        item.setAmount(item.getAmount() - amounts.getKey(itemKey));
                         break;
                     } else {
-                        blockMenu.replaceExistingItem(slot, new ItemStack(Material.AIR));
-                        int rest = amounts.get(itemStack) - item.getAmount();
-                        if (rest != 0) amounts.put(itemStack, rest);
+                        blockMenu.replaceExistingItem(slot, null);
+                        int rest = amounts.getKey(itemKey) - item.getAmount();
+                        if (rest != 0) amounts.putKey(itemKey, rest);
                         else break;
                     }
                 }
@@ -39,10 +39,10 @@ public class ItemUtils {
     }
 
     public static boolean canTake(@Nonnull BlockMenu blockMenu, @Nonnull int[] slots, @Nonnull ItemStack[] itemStacks) {
-        Map<ItemStack, Integer> toTake = mergeAmounts(itemStacks);
+        ItemHashMap<Integer> toTake = me.ddggdd135.guguslimefunlib.utils.ItemUtils.getAmounts(itemStacks);
 
-        for (ItemStack itemStack : toTake.keySet()) {
-            if (toTake.get(itemStack) > getItemAmount(blockMenu, slots, itemStack)) {
+        for (ItemKey itemKey : toTake.sourceKeySet()) {
+            if (toTake.getKey(itemKey) > getItemAmount(blockMenu, slots, itemKey.getItemStack())) {
                 return false;
             }
         }
@@ -59,28 +59,6 @@ public class ItemUtils {
             }
         }
         return founded;
-    }
-
-    public static Map<ItemStack, Integer> mergeAmounts(@Nonnull ItemStack[] itemStacks) {
-        Map<ItemStack, Integer> amounts = new HashMap<>();
-        for (ItemStack itemStack : itemStacks) {
-            ItemStack item = null; // 在已拿出中找到的
-            for (ItemStack i : amounts.keySet()) {
-                if (SlimefunUtils.isItemSimilar(i, item, true, false)) {
-                    item = i;
-                    break;
-                }
-            }
-
-            if (item != null) {
-                amounts.replace(item, amounts.get(item) + itemStack.getAmount());
-            } else {
-                ItemStack i = itemStack.clone();
-                i.setAmount(1);
-                amounts.put(i, itemStack.getAmount());
-            }
-        }
-        return amounts;
     }
 
     @Nullable public static String getId(@Nonnull ItemStack item) {

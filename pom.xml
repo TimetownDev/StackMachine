@@ -86,9 +86,9 @@
 
   <dependencies>
       <dependency>
-          <groupId>com.destroystokyo.paper</groupId>
+          <groupId>io.papermc.paper</groupId>
           <artifactId>paper-api</artifactId>
-          <version>1.16.5-R0.1-SNAPSHOT</version>
+          <version>1.20.1-R0.1-SNAPSHOT</version>
           <scope>provided</scope>
       </dependency>
 
@@ -142,7 +142,7 @@
       <dependency>
           <groupId>com.github.TimetownDev</groupId>
           <artifactId>GuguSlimefunLib</artifactId>
-          <version>f701e2ab67</version>
+          <version>5f7cc1bd46</version>
       </dependency>
 
   </dependencies>

@@ -28,6 +28,8 @@ import java.util.List;
 import java.util.Map;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import me.ddggdd135.guguslimefunlib.api.abstracts.TickingBlock;
+import me.ddggdd135.guguslimefunlib.api.interfaces.InventoryBlock;
 import me.ddggdd135.stackmachine.StackMachine;
 import me.ddggdd135.stackmachine.utils.ItemUtils;
 import me.ddggdd135.stackmachine.utils.RecipeUtils;
@@ -36,8 +38,6 @@ import me.mrCookieSlime.CSCoreLibPlugin.general.Inventory.ChestMenu;
 import me.mrCookieSlime.CSCoreLibPlugin.general.Inventory.ClickAction;
 import me.mrCookieSlime.Slimefun.Objects.SlimefunItem.abstractItems.AContainer;
 import me.mrCookieSlime.Slimefun.Objects.SlimefunItem.abstractItems.MachineRecipe;
-import me.mrCookieSlime.Slimefun.Objects.SlimefunItem.interfaces.InventoryBlock;
-import me.mrCookieSlime.Slimefun.Objects.handlers.BlockTicker;
 import me.mrCookieSlime.Slimefun.api.inventory.BlockMenu;
 import me.mrCookieSlime.Slimefun.api.inventory.BlockMenuPreset;
 import org.bukkit.Location;
@@ -47,7 +47,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.ItemStack;
 
-public class StackMachineImplementation extends SlimefunItem
+public class StackMachineImplementation extends TickingBlock
         implements EnergyNetComponent, InventoryBlock, MachineProcessHolder<CustomCraftingOperation> {
     private final GoldPan goldPan = SlimefunItems.GOLD_PAN.getItem(GoldPan.class);
     private final GoldPan netherGoldPan = SlimefunItems.NETHER_GOLD_PAN.getItem(GoldPan.class);
@@ -56,13 +56,108 @@ public class StackMachineImplementation extends SlimefunItem
     };
     private static final int[] BORDER_MACHINE = {12, 14, 21, 22, 23};
     private final MachineProcessor<CustomCraftingOperation> processor = new MachineProcessor<>(this);
-    private final Map<Location, ItemStack> machineCache = new HashMap<>(); // <location, ItemStack>
+    private final Map<Location, ItemStack> machineCache = new HashMap<>();
+    private final Map<Location, Integer> energyCache = new HashMap<>();
+
+    @Override
+    public boolean isSynchronized() {
+        return false;
+    }
+
+    @Override
+    protected void tick(
+            @Nonnull Block block, @Nonnull SlimefunItem slimefunItem, @Nonnull SlimefunBlockData slimefunBlockData) {
+        BlockMenu blockMenu = StorageCacheUtils.getMenu(block.getLocation());
+        ItemStack machineItem = blockMenu.getInventory().getItem(13);
+        blockMenu.replaceExistingItem(31, new CustomItemStack(Material.BLACK_STAINED_GLASS_PANE, " "));
+        if (machineItem == null || machineItem.getType().isAir()) return;
+        SlimefunItem machine = SlimefunItem.getByItem(machineItem);
+        if (machine == null) return;
+        List<MachineRecipe> recipes = new ArrayList<>();
+        try {
+            if (machine instanceof ElectricGoldPan) {
+                MachineRecipe recipe = findNextGoldPanRecipe(blockMenu);
+                if (recipe != null) recipes.add(recipe);
+            } else {
+                recipes = RecipeUtils.getRecipes(machine, block);
+            }
+        } catch (NoSuchFieldException | IllegalAccessException ignored) {
+            return;
+        }
+
+        MachineRecipe recipeCache = null;
+
+        int ticks = machineItem.getAmount();
+        energyCache.put(block.getLocation(), getEnergyOnce(block));
+
+        while (ticks > 0) {
+            if (machineCache.containsKey(block.getLocation())
+                    && !SlimefunUtils.isItemSimilar(machineCache.get(block.getLocation()), machineItem, false)) {
+                processor.endOperation(block);
+                blockMenu.replaceExistingItem(40, new CustomItemStack(Material.BLACK_STAINED_GLASS_PANE, " "));
+            }
+            machineCache.put(block.getLocation(), machineItem);
+
+            CustomCraftingOperation currentOperation = processor.getOperation(block);
+
+            if (currentOperation == null) {
+                ticks--;
+                MachineRecipe next = recipeCache;
+                if (next == null || !(InvUtils.fitAll(blockMenu.toInventory(), next.getOutput(), getOutputSlots()))) {
+                    next = findNextRecipe(blockMenu, recipes);
+                    if (next == null) break;
+                    recipeCache = next;
+                }
+                if (!ItemUtils.canTake(blockMenu, getInputSlots(), next.getInput())) {
+                    break;
+                }
+                ItemUtils.takeItem(blockMenu, getInputSlots(), next.getInput());
+                currentOperation = new CustomCraftingOperation(next);
+                processor.startOperation(block, currentOperation);
+                if (ticks <= 0) break;
+            }
+
+            if (takeCharge(block)) {
+                if (!currentOperation.isFinished()) {
+                    if (ticks > currentOperation.getTotalTicks()) {
+                        currentOperation.addProgress(currentOperation.getTotalTicks());
+                        ticks -= currentOperation.getTotalTicks();
+                    } else {
+                        currentOperation.addProgress(ticks);
+                        ticks = 0;
+                    }
+                } else {
+                    ticks--;
+                    for (ItemStack output : currentOperation.getResults()) {
+                        blockMenu.pushItem(output.clone(), getOutputSlots());
+                    }
+                    processor.endOperation(block);
+                }
+            } else {
+                blockMenu.replaceExistingItem(31, new CustomItemStack(Material.RED_STAINED_GLASS_PANE, "&c无电力"));
+                return;
+            }
+        }
+
+        CustomCraftingOperation currentOperation = processor.getOperation(block);
+        if (currentOperation == null || currentOperation.isFinished()) {
+            blockMenu.replaceExistingItem(40, new CustomItemStack(Material.BLACK_STAINED_GLASS_PANE, " "));
+            return;
+        }
+        blockMenu.replaceExistingItem(
+                31,
+                new CustomItemStack(
+                        Material.IRON_PICKAXE,
+                        "&a工作中 耗电量: " + getEnergyPerTick(block) + "/slimefun tick &e" + machineItem.getAmount()
+                                + "倍速"));
+        processor.updateProgressBar(blockMenu, 40, currentOperation);
+    }
 
     public StackMachineImplementation(
             ItemGroup itemGroup, SlimefunItemStack item, RecipeType recipeType, ItemStack[] recipe) {
         super(itemGroup, item, recipeType, recipe);
 
-        createPreset(this, "&b堆叠机器", this::constructMenu);
+        createPreset(this);
 
         addItemHandler(onBlockBreak());
 
@@ -88,7 +183,8 @@ public class StackMachineImplementation extends SlimefunItem
         };
     }
 
-    protected void constructMenu(BlockMenuPreset preset) {
+    @Override
+    public void init(@Nonnull BlockMenuPreset preset) {
         for (int i : BORDER) {
             preset.addItem(i, ChestMenuUtils.getBackground(), ChestMenuUtils.getEmptyClickHandler());
         }
@@ -176,110 +272,7 @@ public class StackMachineImplementation extends SlimefunItem
     }
 
     @Override
-    public void preRegister() {
-        addItemHandler(new BlockTicker() {
-
-            @Override
-            public void tick(
-                    @Nonnull Block block,
-                    @Nonnull SlimefunItem slimefunItem,
-                    @Nonnull SlimefunBlockData slimefunBlockData) {
-                BlockMenu blockMenu = StorageCacheUtils.getMenu(block.getLocation());
-                ItemStack machineItem = blockMenu.getInventory().getItem(13);
-                blockMenu.replaceExistingItem(31, new CustomItemStack(Material.BLACK_STAINED_GLASS_PANE, " "));
-                if (machineItem == null || machineItem.getType().isAir()) return;
-                SlimefunItem machine = SlimefunItem.getByItem(machineItem);
-                if (machine == null) return;
-                List<MachineRecipe> recipes = new ArrayList<>();
-                try {
-                    if (machine instanceof ElectricGoldPan) {
-                        MachineRecipe recipe = findNextGoldPanRecipe(blockMenu);
-                        if (recipe != null) recipes.add(recipe);
-                    } else {
-                        recipes = RecipeUtils.getRecipes(machine, block);
-                    }
-                } catch (NoSuchFieldException | IllegalAccessException ignored) {
-                    return;
-                }
-
-                MachineRecipe recipeCache = null;
-
-                int ticks = machineItem.getAmount();
-
-                while (ticks > 0) {
-                    if (machineCache.containsKey(block.getLocation())
-                            && !SlimefunUtils.isItemSimilar(
-                                    machineCache.get(block.getLocation()), machineItem, false)) {
-                        processor.endOperation(block);
-                        blockMenu.replaceExistingItem(40, new CustomItemStack(Material.BLACK_STAINED_GLASS_PANE, " "));
-                    }
-                    machineCache.put(block.getLocation(), machineItem);
-
-                    CustomCraftingOperation currentOperation = processor.getOperation(block);
-
-                    if (currentOperation == null) {
-                        ticks--;
-                        MachineRecipe next = recipeCache;
-                        if (next == null
-                                || !(InvUtils.fitAll(blockMenu.toInventory(), next.getOutput(), getOutputSlots())
-                                        && InvUtils.fitAll(
-                                                blockMenu.toInventory(), next.getOutput(), getOutputSlots()))) {
-                            next = findNextRecipe(blockMenu, recipes);
-                            if (next == null) break;
-                            recipeCache = next;
-                        }
-                        if (!ItemUtils.canTake(blockMenu, getInputSlots(), next.getInput())) {
-                            break;
-                        }
-                        ItemUtils.takeItem(blockMenu, getInputSlots(), next.getInput());
-                        currentOperation = new CustomCraftingOperation(next);
-                        processor.startOperation(block, currentOperation);
-                        if (ticks <= 0) break;
-                    }
-
-                    if (takeCharge(block)) {
-                        if (!currentOperation.isFinished()) {
-                            if (ticks > currentOperation.getTotalTicks()) {
-                                currentOperation.addProgress(currentOperation.getTotalTicks());
-                                ticks -= currentOperation.getTotalTicks();
-                            } else {
-                                currentOperation.addProgress(ticks);
-                                ticks = 0;
-                            }
-                        } else {
-                            ticks--;
-                            for (ItemStack output : currentOperation.getResults()) {
-                                blockMenu.pushItem(output.clone(), getOutputSlots());
-                            }
-                            processor.endOperation(block);
-                        }
-                    } else {
-                        blockMenu.replaceExistingItem(
-                                31, new CustomItemStack(Material.RED_STAINED_GLASS_PANE, "&c无电力"));
-                        return;
-                    }
-                }
-
-                CustomCraftingOperation currentOperation = processor.getOperation(block);
-                if (currentOperation == null || currentOperation.isFinished()) {
-                    blockMenu.replaceExistingItem(40, new CustomItemStack(Material.BLACK_STAINED_GLASS_PANE, " "));
-                    return;
-                }
-                blockMenu.replaceExistingItem(
-                        31,
-                        new CustomItemStack(
-                                Material.IRON_PICKAXE,
-                                "&a工作中 耗电量: " + getEnergyPerTick(block) + "/slimefun tick &e" + machineItem.getAmount()
-                                        + "倍速"));
-                processor.updateProgressBar(blockMenu, 40, currentOperation);
-            }
-
-            @Override
-            public boolean isSynchronized() {
-                return false;
-            }
-        });
-    }
+    public void newInstance(@Nonnull BlockMenu blockMenu, @Nonnull Block block) {}
 
     private int getEnergyPerTick(@Nonnull Block block) {
         BlockMenu inv = StorageCacheUtils.getMenu(block.getLocation());
@@ -315,7 +308,7 @@ public class StackMachineImplementation extends SlimefunItem
 
     private boolean takeCharge(@Nonnull Block block) {
         int charge = getCharge(block.getLocation());
-        int energyOnce = getEnergyOnce(block);
+        int energyOnce = energyCache.get(block.getLocation());
         if (charge < energyOnce) return false;
         setCharge(block.getLocation(), charge - energyOnce);
         return true;
