@@ -57,6 +57,7 @@ public class StackMachineImplementation extends TickingBlock
     private static final int[] BORDER_MACHINE = {12, 14, 21, 22, 23};
     private final MachineProcessor<CustomCraftingOperation> processor = new MachineProcessor<>(this);
     private final Map<Location, ItemStack> machineCache = new HashMap<>();
+    private final Map<Location, SlimefunItem> machineSfItemCache = new HashMap<>();
     private final Map<Location, Integer> energyCache = new HashMap<>();
 
     @Override
@@ -90,34 +91,36 @@ public class StackMachineImplementation extends TickingBlock
         int ticks = machineItem.getAmount();
         energyCache.put(block.getLocation(), getEnergyOnce(block));
 
-        while (ticks > 0) {
-            if (machineCache.containsKey(block.getLocation())
-                    && !SlimefunUtils.isItemSimilar(machineCache.get(block.getLocation()), machineItem, false)) {
-                processor.endOperation(block);
-                blockMenu.replaceExistingItem(40, new CustomItemStack(Material.BLACK_STAINED_GLASS_PANE, " "));
-            }
-            machineCache.put(block.getLocation(), machineItem);
-
-            CustomCraftingOperation currentOperation = processor.getOperation(block);
-
-            if (currentOperation == null) {
-                ticks--;
-                MachineRecipe next = recipeCache;
-                if (next == null || !(InvUtils.fitAll(blockMenu.toInventory(), next.getOutput(), getOutputSlots()))) {
-                    next = findNextRecipe(blockMenu, recipes);
-                    if (next == null) break;
-                    recipeCache = next;
+        if (takeCharge(block)) {
+            while (ticks > 0) {
+                if (machineCache.containsKey(block.getLocation())
+                        && !SlimefunUtils.isItemSimilar(machineCache.get(block.getLocation()), machineItem, false)) {
+                    processor.endOperation(block);
+                    blockMenu.replaceExistingItem(40, new CustomItemStack(Material.BLACK_STAINED_GLASS_PANE, " "));
                 }
-                if (!ItemUtils.canTake(blockMenu, getInputSlots(), next.getInput())) {
-                    break;
-                }
-                ItemUtils.takeItem(blockMenu, getInputSlots(), next.getInput());
-                currentOperation = new CustomCraftingOperation(next);
-                processor.startOperation(block, currentOperation);
-                if (ticks <= 0) break;
-            }
+                machineCache.put(block.getLocation(), machineItem);
+                machineSfItemCache.put(block.getLocation(), machine);
 
-            if (takeCharge(block)) {
+                CustomCraftingOperation currentOperation = processor.getOperation(block);
+
+                if (currentOperation == null) {
+                    ticks--;
+                    MachineRecipe next = recipeCache;
+                    if (next == null
+                            || !(InvUtils.fitAll(blockMenu.toInventory(), next.getOutput(), getOutputSlots()))) {
+                        next = findNextRecipe(blockMenu, recipes);
+                        if (next == null) break;
+                        recipeCache = next;
+                    }
+                    if (!ItemUtils.canTake(blockMenu, getInputSlots(), next.getInput())) {
+                        break;
+                    }
+                    ItemUtils.takeItem(blockMenu, getInputSlots(), next.getInput());
+                    currentOperation = new CustomCraftingOperation(next);
+                    processor.startOperation(block, currentOperation);
+                    if (ticks <= 0) break;
+                }
+
                 if (!currentOperation.isFinished()) {
                     if (ticks > currentOperation.getTotalTicks()) {
                         currentOperation.addProgress(currentOperation.getTotalTicks());
@@ -133,10 +136,10 @@ public class StackMachineImplementation extends TickingBlock
                     }
                     processor.endOperation(block);
                 }
-            } else {
-                blockMenu.replaceExistingItem(31, new CustomItemStack(Material.RED_STAINED_GLASS_PANE, "&c无电力"));
-                return;
             }
+        } else {
+            blockMenu.replaceExistingItem(31, new CustomItemStack(Material.RED_STAINED_GLASS_PANE, "&c无电力"));
+            return;
         }
 
         CustomCraftingOperation currentOperation = processor.getOperation(block);
@@ -309,8 +312,9 @@ public class StackMachineImplementation extends TickingBlock
     private boolean takeCharge(@Nonnull Block block) {
         int charge = getCharge(block.getLocation());
         int energyOnce = energyCache.get(block.getLocation());
-        if (charge < energyOnce) return false;
-        setCharge(block.getLocation(), charge - energyOnce);
+        ItemStack machineItem = machineCache.get(block.getLocation());
+        if (charge < energyOnce * machineItem.getAmount()) return false;
+        setCharge(block.getLocation(), charge - energyOnce * machineItem.getAmount());
         return true;
     }
 
