@@ -313,6 +313,7 @@ public class StackMachineImplementation extends TickingBlock
         int charge = getCharge(block.getLocation());
         int energyOnce = energyCache.get(block.getLocation());
         ItemStack machineItem = machineCache.get(block.getLocation());
+        if (machineItem == null || machineItem.getType().isAir()) return false;
         if (charge < energyOnce * machineItem.getAmount()) return false;
         setCharge(block.getLocation(), charge - energyOnce * machineItem.getAmount());
         return true;
