@@ -91,16 +91,16 @@ public class StackMachineImplementation extends TickingBlock
         int ticks = machineItem.getAmount();
         energyCache.put(block.getLocation(), getEnergyOnce(block));
 
+        if (machineCache.containsKey(block.getLocation())
+                && !SlimefunUtils.isItemSimilar(machineCache.get(block.getLocation()), machineItem, false)) {
+            processor.endOperation(block);
+            blockMenu.replaceExistingItem(40, new CustomItemStack(Material.BLACK_STAINED_GLASS_PANE, " "));
+        }
+        machineCache.put(block.getLocation(), machineItem);
+        machineSfItemCache.put(block.getLocation(), machine);
+
         if (takeCharge(block)) {
             while (ticks > 0) {
-                if (machineCache.containsKey(block.getLocation())
-                        && !SlimefunUtils.isItemSimilar(machineCache.get(block.getLocation()), machineItem, false)) {
-                    processor.endOperation(block);
-                    blockMenu.replaceExistingItem(40, new CustomItemStack(Material.BLACK_STAINED_GLASS_PANE, " "));
-                }
-                machineCache.put(block.getLocation(), machineItem);
-                machineSfItemCache.put(block.getLocation(), machine);
-
                 CustomCraftingOperation currentOperation = processor.getOperation(block);
 
                 if (currentOperation == null) {
@@ -311,11 +311,11 @@ public class StackMachineImplementation extends TickingBlock
 
     private boolean takeCharge(@Nonnull Block block) {
         int charge = getCharge(block.getLocation());
-        int energyOnce = energyCache.get(block.getLocation());
+        int energy = getEnergyPerTick(block);
         ItemStack machineItem = machineCache.get(block.getLocation());
         if (machineItem == null || machineItem.getType().isAir()) return false;
-        if (charge < energyOnce * machineItem.getAmount()) return false;
-        setCharge(block.getLocation(), charge - energyOnce * machineItem.getAmount());
+        if (charge < energy) return false;
+        setCharge(block.getLocation(), charge - energy);
         return true;
     }
 
