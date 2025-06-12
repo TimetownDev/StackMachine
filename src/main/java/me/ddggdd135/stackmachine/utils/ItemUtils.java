@@ -2,8 +2,8 @@ package me.ddggdd135.stackmachine.utils;
 
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItemStack;
-import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import io.github.thebusybiscuit.slimefun4.utils.SlimefunUtils;
+import java.util.Map;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import me.ddggdd135.guguslimefunlib.api.ItemHashMap;
@@ -11,8 +11,6 @@ import me.ddggdd135.guguslimefunlib.items.ItemKey;
 import me.mrCookieSlime.Slimefun.api.inventory.BlockMenu;
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
-import org.bukkit.persistence.PersistentDataType;
 
 public class ItemUtils {
     public static void takeItem(@Nonnull BlockMenu blockMenu, @Nonnull int[] slots, @Nonnull ItemStack[] itemStacks) {
@@ -65,13 +63,8 @@ public class ItemUtils {
         if (item instanceof SlimefunItemStack) {
             return ((SlimefunItemStack) item).getItemId();
         } else {
-            return item.hasItemMeta() ? getId(item.getItemMeta()) : null;
+            return me.ddggdd135.guguslimefunlib.utils.ItemUtils.getSFId(item);
         }
-    }
-
-    @Nullable public static String getId(@Nonnull ItemMeta meta) {
-        return meta.getPersistentDataContainer()
-                .get(Slimefun.getItemDataService().getKey(), PersistentDataType.STRING);
     }
 
     @Nonnull
@@ -80,5 +73,16 @@ public class ItemUtils {
         return item == null
                 ? new ItemStack(Material.valueOf(id))
                 : item.getItem().clone();
+    }
+
+    @Nonnull
+    public static ItemHashMap<Long> muiItems(@Nonnull ItemHashMap<Long> items, long times) {
+        ItemHashMap<Long> result = new ItemHashMap<>();
+
+        for (Map.Entry<ItemKey, Long> i : items.keyEntrySet()) {
+            result.putKey(i.getKey(), i.getValue() * times);
+        }
+
+        return result;
     }
 }

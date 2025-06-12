@@ -142,7 +142,16 @@
       <dependency>
           <groupId>com.github.TimetownDev</groupId>
           <artifactId>GuguSlimefunLib</artifactId>
-          <version>5f7cc1bd46</version>
+          <version>afeac968aa</version>
+          <scope>provided</scope>
+      </dependency>
+
+      <dependency>
+          <groupId>me.ddggdd135.slimeae</groupId>
+          <artifactId>SlimeAE</artifactId>
+          <version>49472af</version>
+          <scope>system</scope>
+          <systemPath>${basedir}/lib/SlimeAE.jar</systemPath>
       </dependency>
 
   </dependencies>

@@ -55,10 +55,10 @@ public class StackMachineImplementation extends TickingBlock
         0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 17, 18, 26, 27, 35, 36, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53
     };
     private static final int[] BORDER_MACHINE = {12, 14, 21, 22, 23};
-    private final MachineProcessor<CustomCraftingOperation> processor = new MachineProcessor<>(this);
-    private final Map<Location, ItemStack> machineCache = new HashMap<>();
-    private final Map<Location, SlimefunItem> machineSfItemCache = new HashMap<>();
-    private final Map<Location, Integer> energyCache = new HashMap<>();
+    protected final MachineProcessor<CustomCraftingOperation> processor = new MachineProcessor<>(this);
+    protected final Map<Location, ItemStack> machineCache = new HashMap<>();
+    protected final Map<Location, SlimefunItem> machineSfItemCache = new HashMap<>();
+    protected final Map<Location, Integer> energyCache = new HashMap<>();
 
     @Override
     public boolean isSynchronized() {
@@ -79,7 +79,7 @@ public class StackMachineImplementation extends TickingBlock
         MachineRecipe recipeCache = null;
 
         int ticks = machineItem.getAmount();
-        energyCache.put(block.getLocation(), getEnergyOnce(block));
+        energyCache.put(block.getLocation(), getEnergyOnce(block) * ticks);
 
         if (machineCache.containsKey(block.getLocation())
                 && !SlimefunUtils.isItemSimilar(machineCache.get(block.getLocation()), machineItem, false)) {
@@ -277,27 +277,27 @@ public class StackMachineImplementation extends TickingBlock
     @Override
     public void newInstance(@Nonnull BlockMenu blockMenu, @Nonnull Block block) {}
 
-    private int getEnergyPerTick(@Nonnull Block block) {
+    protected int getEnergyPerTick(@Nonnull Block block) {
         BlockMenu inv = StorageCacheUtils.getMenu(block.getLocation());
         ItemStack machineItem = inv.getInventory().getItem(13);
         if (machineItem == null || machineItem.getType().isAir()) return 0;
         return getEnergyOnce(block) * machineItem.getAmount();
     }
 
-    private int getEnergyOnce(@Nonnull Block block) {
+    protected int getEnergyOnce(@Nonnull Block block) {
         BlockMenu inv = StorageCacheUtils.getMenu(block.getLocation());
         ItemStack machineItem = inv.getInventory().getItem(13);
         if (machineItem == null || machineItem.getType().isAir()) return 0;
         SlimefunItem machine = SlimefunItem.getByItem(machineItem);
         try {
             if (machine instanceof AContainer aContainer) return aContainer.getEnergyConsumption();
-            else if (StackMachine.getInstance().InfinityExpansionSupport
+            else if (StackMachine.getInfinityIntegration().isLoaded()
                     && machine instanceof AbstractMachineBlock machineBlock) {
                 return ReflectionUtils.getField(machineBlock, "energyPerTick");
-            } else if (StackMachine.getInstance().SlimeCustomizerSupport
+            } else if (StackMachine.getSlimeCustomizerIntegration().isLoaded()
                     && machine instanceof CustomMaterialGenerator customMaterialGenerator) {
                 return ReflectionUtils.getField(customMaterialGenerator, "energyPerTick");
-            } else if (StackMachine.getInstance().RykenSlimefunCustomizerSupport
+            } else if (StackMachine.getRykenSlimefunCustomizerIntegration().isLoaded()
                     && machine
                             instanceof
                             org.lins.mmmjjkx.rykenslimefuncustomizer.objects.customs.machine.CustomMaterialGenerator
@@ -309,8 +309,15 @@ public class StackMachineImplementation extends TickingBlock
         return 32;
     }
 
-    private boolean takeCharge(@Nonnull Block block) {
+    protected boolean takeCharge(@Nonnull Block block) {
+        Integer cache = energyCache.get(block.getLocation());
+
         int charge = getCharge(block.getLocation());
+        if (cache != null) {
+            if (charge < cache) return false;
+            setCharge(block.getLocation(), charge - cache);
+            return true;
+        }
         int energy = getEnergyPerTick(block);
         ItemStack machineItem = machineCache.get(block.getLocation());
         if (machineItem == null || machineItem.getType().isAir()) return false;
@@ -319,7 +326,7 @@ public class StackMachineImplementation extends TickingBlock
         return true;
     }
 
-    @Nullable private MachineRecipe findNextRecipe(@Nonnull BlockMenu blockMenu, @Nonnull List<MachineRecipe> recipes) {
+    @Nullable protected MachineRecipe findNextRecipe(@Nonnull BlockMenu blockMenu, @Nonnull List<MachineRecipe> recipes) {
         Map<Integer, ItemStack> inventory = new HashMap<>();
 
         for (int slot : getInputSlots()) {
@@ -356,7 +363,7 @@ public class StackMachineImplementation extends TickingBlock
         return null;
     }
 
-    @Nullable private MachineRecipe findNextGoldPanRecipe(@Nonnull BlockMenu blockMenu) {
+    @Nullable protected MachineRecipe findNextGoldPanRecipe(@Nonnull BlockMenu blockMenu) {
         ItemStack machineItem = blockMenu.getInventory().getItem(13);
         SlimefunItem machine = SlimefunItem.getByItem(machineItem);
         ElectricGoldPan electricGoldPan = (ElectricGoldPan) machine;

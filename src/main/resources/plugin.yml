@@ -4,6 +4,6 @@ main: me.ddggdd135.stackmachine.StackMachine
 api-version: 1.16
 prefix: StackMachine
 depend: [Slimefun, GuizhanLibPlugin, GuguSlimefunLib]
-softdepend: [SlimeCustomizer, InfinityExpansion, RykenSlimefunCustomizer]
+softdepend: [SlimeCustomizer, InfinityExpansion, RykenSlimefunCustomizer, SlimeAEPlugin]
 authors: [Ddggdd135]
 description: 堆叠机器

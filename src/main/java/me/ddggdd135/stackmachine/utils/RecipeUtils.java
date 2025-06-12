@@ -54,8 +54,7 @@ public class RecipeUtils {
                     4, new ItemStack[] {new ItemStack(Material.SAND)}, new ItemStack[] {SlimefunItems.SALT}));
         } else if (machine instanceof AContainer aContainer) {
             recipes.addAll(aContainer.getMachineRecipes());
-        } else if (StackMachine.getInstance().InfinityExpansionSupport
-                && machine instanceof MachineBlock machineBlock) {
+        } else if (StackMachine.getInfinityIntegration().isLoaded() && machine instanceof MachineBlock machineBlock) {
             List<Object> list = ReflectionUtils.getField(machineBlock, "recipes");
             int ticksPerOutput = ReflectionUtils.getField(machineBlock, "ticksPerOutput");
 
@@ -75,13 +74,13 @@ public class RecipeUtils {
                             ticksPerOutput, in.toArray(new ItemStack[0]), new ItemStack[] {output}));
                 }
             }
-        } else if (StackMachine.getInstance().InfinityExpansionSupport
+        } else if (StackMachine.getInfinityIntegration().isLoaded()
                 && machine instanceof MaterialGenerator materialGenerator) {
             Material material = ReflectionUtils.getField(materialGenerator, "material");
             int speed = ReflectionUtils.getField(materialGenerator, "speed");
             ItemStack output = new ItemStack(material, speed);
             recipes.add(RecipeUtils.createRecipe(1, new ItemStack[0], new ItemStack[] {output}));
-        } else if (StackMachine.getInstance().InfinityExpansionSupport && machine instanceof Quarry quarry) {
+        } else if (StackMachine.getInfinityIntegration().isLoaded() && machine instanceof Quarry quarry) {
             int speed = ReflectionUtils.getField(quarry, "speed");
             int chance = ReflectionUtils.getField(quarry, "chance");
             Material[] outputs = ReflectionUtils.getField(quarry, "outputs");
@@ -101,12 +100,12 @@ public class RecipeUtils {
                 outputItem = new ItemStack(Material.COBBLESTONE, speed);
             }
             recipes.add(RecipeUtils.createRecipe(QUARRY_INTERVAL, new ItemStack[0], new ItemStack[] {outputItem}));
-        } else if (StackMachine.getInstance().SlimeCustomizerSupport
+        } else if (StackMachine.getSlimeCustomizerIntegration().isLoaded()
                 && machine instanceof CustomMaterialGenerator customMaterialGenerator) {
             int tickRate = ReflectionUtils.getField(customMaterialGenerator, "tickRate");
             ItemStack output = ReflectionUtils.getField(customMaterialGenerator, "output");
             recipes.add(RecipeUtils.createRecipe(tickRate - 1, new ItemStack[0], new ItemStack[] {output}));
-        } else if (StackMachine.getInstance().RykenSlimefunCustomizerSupport
+        } else if (StackMachine.getRykenSlimefunCustomizerIntegration().isLoaded()
                 && machine
                         instanceof
                         org.lins.mmmjjkx.rykenslimefuncustomizer.objects.customs.machine.CustomMaterialGenerator
@@ -116,8 +115,7 @@ public class RecipeUtils {
             for (ItemStack itemStack : generation) {
                 recipes.add(RecipeUtils.createRecipe(tickRate - 1, new ItemStack[0], new ItemStack[] {itemStack}));
             }
-        } else if (StackMachine.getInstance().InfinityExpansionSupport
-                && machine instanceof VoidHarvester voidHarvester) {
+        } else if (StackMachine.getInfinityIntegration().isLoaded() && machine instanceof VoidHarvester voidHarvester) {
             int speed = ReflectionUtils.getField(voidHarvester, "speed");
             recipes.add(RecipeUtils.createRecipe(speed, new ItemStack[0], new ItemStack[] {Materials.VOID_BIT}));
         } else if (machine instanceof AbstractMachineBlock abstractMachineBlock) {
@@ -131,7 +129,7 @@ public class RecipeUtils {
         if (sfItem instanceof AContainer) {
             return true;
         }
-        if (StackMachine.getInstance().InfinityExpansionSupport) {
+        if (StackMachine.getInfinityIntegration().isLoaded()) {
             if (sfItem instanceof MachineBlock) return true;
             if (sfItem instanceof MaterialGenerator) return true;
             if (sfItem instanceof Quarry) return true;
@@ -139,11 +137,11 @@ public class RecipeUtils {
             if (sfItem instanceof AbstractMachineBlock) return true;
         }
 
-        if (StackMachine.getInstance().SlimeCustomizerSupport) {
+        if (StackMachine.getSlimeCustomizerIntegration().isLoaded()) {
             if (sfItem instanceof CustomMaterialGenerator) return true;
         }
 
-        if (StackMachine.getInstance().RykenSlimefunCustomizerSupport) {
+        if (StackMachine.getRykenSlimefunCustomizerIntegration().isLoaded()) {
             if (sfItem
                     instanceof org.lins.mmmjjkx.rykenslimefuncustomizer.objects.customs.machine.CustomMaterialGenerator)
                 return true;

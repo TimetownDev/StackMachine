@@ -16,6 +16,10 @@ public class CustomCraftingOperation implements MachineOperation {
         this(recipe.getInput(), recipe.getOutput(), recipe.getTicks());
     }
 
+    public CustomCraftingOperation(@Nonnull MachineRecipe recipe, int times) {
+        this(recipe.getInput(), recipe.getOutput(), recipe.getTicks() * times);
+    }
+
     public CustomCraftingOperation(@Nonnull ItemStack[] ingredients, @Nonnull ItemStack[] results, int totalTicks) {
         this.currentTicks = 0;
         Validate.notEmpty(results, "The results array cannot be empty or null");
