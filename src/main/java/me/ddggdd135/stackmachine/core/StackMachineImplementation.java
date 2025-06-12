@@ -72,19 +72,9 @@ public class StackMachineImplementation extends TickingBlock
         ItemStack machineItem = blockMenu.getInventory().getItem(13);
         blockMenu.replaceExistingItem(31, new CustomItemStack(Material.BLACK_STAINED_GLASS_PANE, " "));
         if (machineItem == null || machineItem.getType().isAir()) return;
-        SlimefunItem machine = SlimefunItem.getByItem(machineItem);
+        SlimefunItem machine = machineSfItemCache.get(block.getLocation());
+        if (machine == null) machine = SlimefunItem.getByItem(machineItem);
         if (machine == null) return;
-        List<MachineRecipe> recipes = new ArrayList<>();
-        try {
-            if (machine instanceof ElectricGoldPan) {
-                MachineRecipe recipe = findNextGoldPanRecipe(blockMenu);
-                if (recipe != null) recipes.add(recipe);
-            } else {
-                recipes = RecipeUtils.getRecipes(machine, block);
-            }
-        } catch (NoSuchFieldException | IllegalAccessException ignored) {
-            return;
-        }
 
         MachineRecipe recipeCache = null;
 
@@ -104,10 +94,21 @@ public class StackMachineImplementation extends TickingBlock
                 CustomCraftingOperation currentOperation = processor.getOperation(block);
 
                 if (currentOperation == null) {
-                    ticks--;
                     MachineRecipe next = recipeCache;
                     if (next == null
                             || !(InvUtils.fitAll(blockMenu.toInventory(), next.getOutput(), getOutputSlots()))) {
+                        List<MachineRecipe> recipes = new ArrayList<>();
+                        try {
+                            if (machine instanceof ElectricGoldPan) {
+                                MachineRecipe recipe = findNextGoldPanRecipe(blockMenu);
+                                if (recipe != null) recipes.add(recipe);
+                            } else {
+                                recipes = RecipeUtils.getRecipes(machine, block);
+                            }
+                        } catch (NoSuchFieldException | IllegalAccessException ignored) {
+                            return;
+                        }
+
                         next = findNextRecipe(blockMenu, recipes);
                         if (next == null) break;
                         recipeCache = next;
@@ -118,7 +119,6 @@ public class StackMachineImplementation extends TickingBlock
                     ItemUtils.takeItem(blockMenu, getInputSlots(), next.getInput());
                     currentOperation = new CustomCraftingOperation(next);
                     processor.startOperation(block, currentOperation);
-                    if (ticks <= 0) break;
                 }
 
                 if (!currentOperation.isFinished()) {
