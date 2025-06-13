@@ -57,7 +57,6 @@ public class StackMachineImplementation extends TickingBlock
     private static final int[] BORDER_MACHINE = {12, 14, 21, 22, 23};
     protected final MachineProcessor<CustomCraftingOperation> processor = new MachineProcessor<>(this);
     protected final Map<Location, ItemStack> machineCache = new HashMap<>();
-    protected final Map<Location, SlimefunItem> machineSfItemCache = new HashMap<>();
     protected final Map<Location, Integer> energyCache = new HashMap<>();
 
     @Override
@@ -72,8 +71,7 @@ public class StackMachineImplementation extends TickingBlock
         ItemStack machineItem = blockMenu.getInventory().getItem(13);
         blockMenu.replaceExistingItem(31, new CustomItemStack(Material.BLACK_STAINED_GLASS_PANE, " "));
         if (machineItem == null || machineItem.getType().isAir()) return;
-        SlimefunItem machine = machineSfItemCache.get(block.getLocation());
-        if (machine == null) machine = SlimefunItem.getByItem(machineItem);
+        SlimefunItem machine = SlimefunItem.getByItem(machineItem);
         if (machine == null) return;
 
         MachineRecipe recipeCache = null;
@@ -87,7 +85,6 @@ public class StackMachineImplementation extends TickingBlock
             blockMenu.replaceExistingItem(40, new CustomItemStack(Material.BLACK_STAINED_GLASS_PANE, " "));
         }
         machineCache.put(block.getLocation(), machineItem);
-        machineSfItemCache.put(block.getLocation(), machine);
 
         if (takeCharge(block)) {
             while (ticks > 0) {

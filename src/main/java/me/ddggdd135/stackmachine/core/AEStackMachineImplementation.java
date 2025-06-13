@@ -57,8 +57,7 @@ public class AEStackMachineImplementation extends StackMachineImplementation imp
         ItemStack machineItem = blockMenu.getInventory().getItem(13);
         blockMenu.replaceExistingItem(31, new CustomItemStack(Material.BLACK_STAINED_GLASS_PANE, " "));
         if (machineItem == null || machineItem.getType().isAir()) return;
-        SlimefunItem machine = machineSfItemCache.get(block.getLocation());
-        if (machine == null) machine = SlimefunItem.getByItem(machineItem);
+        SlimefunItem machine = SlimefunItem.getByItem(machineItem);
         if (machine == null) return;
 
         NetworkInfo networkInfo = SlimeAEPlugin.getNetworkData().getNetworkInfo(block.getLocation());
@@ -75,7 +74,6 @@ public class AEStackMachineImplementation extends StackMachineImplementation imp
             blockMenu.replaceExistingItem(40, new CustomItemStack(Material.BLACK_STAINED_GLASS_PANE, " "));
         }
         machineCache.put(block.getLocation(), machineItem);
-        machineSfItemCache.put(block.getLocation(), machine);
 
         if (takeCharge(block)) {
             CustomCraftingOperation currentOperation = processor.getOperation(block);
