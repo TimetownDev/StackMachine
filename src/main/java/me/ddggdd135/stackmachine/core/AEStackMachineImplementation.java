@@ -44,6 +44,7 @@ public class AEStackMachineImplementation extends StackMachineImplementation imp
     };
     private static final int[] BORDER_MACHINE = {12, 14, 21, 22, 23};
     private final Map<Location, ItemStorage> tmpStorages = new HashMap<>();
+    private final Map<Location, ItemStorage> inputStorages = new HashMap<>();
 
     @Override
     public boolean isSynchronized() {
@@ -79,6 +80,7 @@ public class AEStackMachineImplementation extends StackMachineImplementation imp
             CustomCraftingOperation currentOperation = processor.getOperation(block);
 
             ItemStorage blockStorage = tmpStorages.computeIfAbsent(block.getLocation(), x -> new ItemStorage());
+            ItemStorage inputStorage = inputStorages.computeIfAbsent(block.getLocation(), x -> new ItemStorage());
 
             if (currentOperation == null) {
                 if (!blockStorage.getStorageUnsafe().isEmpty()) {
@@ -104,13 +106,17 @@ public class AEStackMachineImplementation extends StackMachineImplementation imp
                 next = findNextRecipe(blockMenu, recipes);
                 if (next == null) return;
 
-                ItemHashMap<Long> need =
+                ItemHashMap<Long> allNeed =
                         ItemUtils.muiItems(me.ddggdd135.slimeae.utils.ItemUtils.getAmounts(next.getInput()), amount);
+                ItemHashMap<Long> need =
+                        me.ddggdd135.slimeae.utils.ItemUtils.takeItems(allNeed, inputStorage.getStorageUnsafe());
                 ItemRequest[] requests = me.ddggdd135.slimeae.utils.ItemUtils.createRequests(need);
+                inputStorage.addItem(storage.takeItem(requests).getStorageUnsafe());
 
-                if (!storage.contains(requests)) return;
+                ItemRequest[] allRequests = me.ddggdd135.slimeae.utils.ItemUtils.createRequests(allNeed);
+                if (!inputStorage.contains(allRequests)) return;
+                inputStorage.takeItem(allRequests);
 
-                storage.takeItem(requests);
                 currentOperation = new CustomCraftingOperation(next);
                 processor.startOperation(block, currentOperation);
             } else if (!currentOperation.isFinished()) {
@@ -162,6 +168,21 @@ public class AEStackMachineImplementation extends StackMachineImplementation imp
                     inv.dropItems(b.getLocation(), getInputSlots());
                     inv.dropItems(b.getLocation(), getOutputSlots());
                     inv.dropItems(b.getLocation(), 13);
+                }
+
+                ItemStorage blockStorage = tmpStorages.get(b.getLocation());
+                ItemStorage inputStorage = inputStorages.get(b.getLocation());
+
+                if (blockStorage != null) {
+                    for (ItemStack i : blockStorage.toItemStacks()) {
+                        b.getLocation().getWorld().dropItem(b.getLocation(), i);
+                    }
+                }
+
+                if (inputStorage != null) {
+                    for (ItemStack i : inputStorage.toItemStacks()) {
+                        b.getLocation().getWorld().dropItem(b.getLocation(), i);
+                    }
                 }
 
                 machineCache.remove(b.getLocation().toString());
