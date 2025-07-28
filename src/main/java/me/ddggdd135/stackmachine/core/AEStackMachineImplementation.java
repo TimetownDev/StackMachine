@@ -185,6 +185,9 @@ public class AEStackMachineImplementation extends StackMachineImplementation imp
                     }
                 }
 
+                tmpStorages.remove(b.getLocation());
+                inputStorages.remove(b.getLocation());
+
                 machineCache.remove(b.getLocation().toString());
             }
         };
